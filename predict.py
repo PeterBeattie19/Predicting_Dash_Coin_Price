@@ -59,9 +59,9 @@ def split_data(data, labels, split_point):
 
 	return x1,x2,y1,y2
 
-def train_model(x, y, look_back, num_layers, num_cells, epochs, batch_size):
+def train_model(x, y, look_back, num_layers, num_cells, epochs, batch_size, drop_out):
     model = Sequential()
-    model.add(LSTM(num_cells, activation='hard_sigmoid', input_shape=(look_back, 4)))
+    model.add(LSTM(num_cells, activation='hard_sigmoid', input_shape=(look_back, 4), dropout=drop_out))
 
     model.add(Dense(1, activation='linear'))
 
@@ -71,12 +71,11 @@ def train_model(x, y, look_back, num_layers, num_cells, epochs, batch_size):
     print("Trained")
     return model
 
-def run_neural_net(look_back, num_layers, num_cells, epochs, batch_size):
-	data = load_coin_prices("dash_price") 
+def run_neural_net(look_back, num_layers, num_cells, epochs, batch_size, drop_out):
+	data = load_coin_prices("bitcoin_price") 
+	data = data[::-1]
 	data = calc_price_change(data) 
 	data = shape_for_lstm(data, look_back)
-
-	print(data[:2])
 
 	labels = get_labels(data, look_back)
 
@@ -84,7 +83,7 @@ def run_neural_net(look_back, num_layers, num_cells, epochs, batch_size):
 	 
 	x1, x2, y1, y2 = split_data(data, labels, int(0.9*len(data))) 
 
-	model = train_model(x1, y1, look_back, num_layers, num_cells, epochs, batch_size)
+	model = train_model(x1, y1, look_back, num_layers, num_cells, epochs, batch_size, drop_out)
 
 	predictions = model.predict(x2) 
 
@@ -106,15 +105,38 @@ def run_neural_net(look_back, num_layers, num_cells, epochs, batch_size):
 look_back = 15
 epochs = 100
 batch_size = 10
-num_cells = 100
+num_cells = 200
 num_layers = 1
+drop_out = 0.7
 
-predictions = run_neural_net(look_back, num_layers, num_cells, epochs, batch_size)
+
+f = open("predictions.txt", "r")
+
+real = []
+not_real = []
+correct = 0
+incorrect = 0
+
+for i in f:
+	exp, pred = map(float, i.split())
+	real.append(exp)
+	not_real.append(pred)
+
+for (i, j) in zip(real, not_real):
+	if i < 0 and j < 0:
+		correct += 1
+	elif i>=0 and j>=0:
+		correct += 1
+	else:
+		incorrect += 1
+print("correct", correct)
+print("incorrect", incorrect) 
+exit() 
+
+
+predictions = run_neural_net(look_back, num_layers, num_cells, epochs, batch_size, drop_out)
 
 f = open("predictions.txt", "w")
 
 for i in predictions:
 	f.write(str(i[0])+" "+str(i[1])+"\n")
-
-#[[728.99 738.74 685.04 685.04]
-# [687.7  731.11 687.22 728.73]]
