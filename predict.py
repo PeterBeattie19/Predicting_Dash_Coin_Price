@@ -98,11 +98,17 @@ def run_neural_net(look_back, num_layers, num_cells, epochs, batch_size, drop_ou
 		print(i, j)
 		if display_count == 10: break
 		display_count += 1
-	return zip(arr1,arr2)
+	return model, zip(arr1,arr2)
 
+def save_predictions_to_file(arr):
+	#arr in parameter is an iterat
+	f = open("predictions.txt", "w")
+
+	for i in arr:
+		f.write(str(i[0])+" "+str(i[1])+"\n")
 
 #HYPER PARAMS 
-look_back = 15
+look_back = 25
 epochs = 100
 batch_size = 10
 num_cells = 200
@@ -110,33 +116,6 @@ num_layers = 1
 drop_out = 0.7
 
 
-f = open("predictions.txt", "r")
+model, predictions = run_neural_net(look_back, num_layers, num_cells, epochs, batch_size, drop_out)
 
-real = []
-not_real = []
-correct = 0
-incorrect = 0
-
-for i in f:
-	exp, pred = map(float, i.split())
-	real.append(exp)
-	not_real.append(pred)
-
-for (i, j) in zip(real, not_real):
-	if i < 0 and j < 0:
-		correct += 1
-	elif i>=0 and j>=0:
-		correct += 1
-	else:
-		incorrect += 1
-print("correct", correct)
-print("incorrect", incorrect) 
-exit() 
-
-
-predictions = run_neural_net(look_back, num_layers, num_cells, epochs, batch_size, drop_out)
-
-f = open("predictions.txt", "w")
-
-for i in predictions:
-	f.write(str(i[0])+" "+str(i[1])+"\n")
+save_predictions_to_file(predictions)
